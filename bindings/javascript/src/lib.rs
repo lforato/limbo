@@ -35,8 +35,8 @@ pub struct Database {
     // pub readonly: bool,
     // #[napi(writable = false)]
     // pub in_transaction: bool,
-    // #[napi(writable = false)]
-    // pub open: bool,
+    #[napi(writable = false)]
+    pub open: bool,
     #[napi(writable = false)]
     pub name: String,
     _db: Arc<limbo_core::Database>,
@@ -75,6 +75,7 @@ impl Database {
             memory,
             _db: db,
             conn,
+            open: true,
             name: path,
             io,
         })
@@ -142,6 +143,11 @@ impl Database {
     }
 
     #[napi]
+    pub fn open(&self) -> bool {
+        self.open
+    }
+
+    #[napi]
     pub fn load_extension(&self, path: String) -> napi::Result<()> {
         let ext_path = limbo_core::resolve_ext_path(path.as_str()).map_err(into_napi_error)?;
         self.conn
@@ -189,8 +195,12 @@ impl Database {
     }
 
     #[napi]
-    pub fn close(&self) -> napi::Result<()> {
+    pub fn close(&mut self) -> napi::Result<()> {
+        if !self.open {
+            return Ok(());
+        }
         self.conn.close().map_err(into_napi_error)?;
+        self.open = false;
         Ok(())
     }
 }
