@@ -347,6 +347,7 @@ fn update_pragma(
             connection.set_sync_mode(mode);
             Ok((program, TransactionMode::None))
         }
+        PragmaName::FunctionList => unreachable!("function_list cannot be set"),
     }
 }
 
@@ -638,6 +639,17 @@ fn query_pragma(
             program.add_pragma_result_column(pragma.to_string());
             Ok((program, TransactionMode::None))
         }
+        PragmaName::FunctionList => {
+            let register = program.alloc_register();
+            program.emit_string8(String::from("hello"), register);
+            program.emit_bool(true, register);
+            program.emit_string8(String::from("s"), register);
+            program.emit_string8(String::from("utf8"), register);
+            program.emit_int(-1, register);
+            program.emit_int(1000, register);
+
+            Ok((program, TransactionMode::None))
+        },
     }
 }
 
